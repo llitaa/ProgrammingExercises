@@ -1,3 +1,6 @@
+// https://leetcode.com/problems/permutation-in-string/#/description
+// 567. Permutation in String
+
 class Solution {
 public:
     bool checkInclusion(string s1, string s2) {
