@@ -7,6 +7,8 @@
 
 // https://www.hackerrank.com/challenges/ctci-connected-cell-in-a-grid
 
+// Test commit from other machine
+
 bool canBeConnected(int value)
 {
 	return value != 0;
