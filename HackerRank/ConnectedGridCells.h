@@ -64,23 +64,46 @@ int findConnectedGridCellsMaxCount()
 		return success;
 	};
 	
+  // Merges clusters, returns merged cluster index
+  auto mergeClusters = [&](std::set<int> connectedClusterIndices) -> int
+  {
+    int res = -1;
+    auto clustersCount = connectedClusterIndices.size();
+    if (clustersCount == 0) return res;
+    auto it = connectedClusterIndices.begin();
+    res = *it;
+    // Merge all clusters to first one, starting from second one
+    ++it;
+    for (; it != end(connectedClusterIndices); ++it)
+    {
+      auto clusterToMerge = std::move(connectionClusters[*it]);
+      connectionClusters.erase(begin(connectionClusters) + *it);
+      connectionClusters[res].insert(begin(clusterToMerge), end(clusterToMerge));
+    }
+    return res;
+  };
+
 	// Check for connection with previous items 
 	auto findPrevItemsConnectedClusterIndex = [&](int rowInd, int colInd) -> int
 	{
 		if (!canBeConnected(sourceData[rowInd][colInd]))
 			return false;
 
-		// TODO clusters merging
-
-		int resClusterIndex = -1;
-		if (colInd > 0 && clusterFinder(rowInd, colInd - 1, resClusterIndex)) return resClusterIndex;
+    // Collect all clusters that current item is connected to
+    std::set<int> connectedClusterIndices;
+    
+		int connectedClusterIndex = -1;
+		if (colInd > 0 && clusterFinder(rowInd, colInd - 1, connectedClusterIndex)) connectedClusterIndices.insert(connectedClusterIndex);
 		if (rowInd > 0 )
 		{
-			if (clusterFinder(rowInd - 1, colInd, resClusterIndex)) return resClusterIndex;
-			if (colInd > 0 && clusterFinder(rowInd - 1, colInd-1, resClusterIndex)) return resClusterIndex;
-			if (colInd < column-1 && clusterFinder(rowInd - 1, colInd + 1, resClusterIndex)) return resClusterIndex;
+			if (clusterFinder(rowInd - 1, colInd, connectedClusterIndex)) connectedClusterIndices.insert(connectedClusterIndex);
+			if (colInd > 0 && clusterFinder(rowInd - 1, colInd-1, connectedClusterIndex)) connectedClusterIndices.insert(connectedClusterIndex);
+			if (colInd < column-1 && clusterFinder(rowInd - 1, colInd + 1, connectedClusterIndex)) connectedClusterIndices.insert(connectedClusterIndex);
 		}
-		return resClusterIndex;
+
+    // merge clusters, get single cluster index
+    connectedClusterIndex = mergeClusters(std::move(connectedClusterIndices));
+		return connectedClusterIndex;
 	};
 
 	for (int i = 0; i < row; ++i)
