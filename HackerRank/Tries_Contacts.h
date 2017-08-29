@@ -14,24 +14,28 @@
 struct Node {
   char m_id;
   bool m_isWorld;
+  long m_childenWordsCount;
   std::unordered_map<char, std::unique_ptr<Node>> m_children;
 
   explicit Node(char id)
     : m_id(id)
     , m_isWorld(false)
     , m_children()
+    , m_childenWordsCount(0)
   {
   }
 
   Node(Node&& other) {
     m_id = other.m_id;
     m_isWorld = other.m_isWorld;
+    m_childenWordsCount = other.m_childenWordsCount;
     m_children = std::move(other.m_children);
   }
 
   Node& operator=(Node&& other) {
     m_id = other.m_id;
     m_isWorld = other.m_isWorld;
+    m_childenWordsCount = other.m_childenWordsCount;
     m_children = std::move(other.m_children);
     return *this;
   }
@@ -48,10 +52,12 @@ using namespace std;
 void addWord(Node* root, const string& word) {
   Node * currentNode = root;
   for (char c : word) {
-    auto insertionRes = currentNode->m_children.insert({ c, make_unique<Node>(c) });
+    ++currentNode->m_childenWordsCount;
+    auto insertionRes = currentNode->m_children.insert(make_pair(c, make_unique<Node>(Node(c))));
     currentNode = insertionRes.first->second.get();
   }
   currentNode->m_isWorld = true;
+  ++currentNode->m_childenWordsCount;
 }
 
 void addChildWords(const Node* root, long& count) {
@@ -62,23 +68,26 @@ void addChildWords(const Node* root, long& count) {
     addChildWords(child.second.get(), count);
   }
 }
-void findWordsCount(const Node* root, const string& word, int searchStart, long& count) {
+bool findWordsCount(const Node* root, const string& word, unsigned searchStart, long& count) {
   auto size = word.size();
   char contactLetter = word[searchStart];
 
-  if (root->m_id != ' ' && root->m_id != contactLetter)
-    return;
+  if (root->m_id != contactLetter || searchStart >= size)
+    return false;
 
   if (searchStart == size - 1) { // Last world
-    if (root->m_id == contactLetter)
-      addChildWords(root, count);
-    return;
+    if (root->m_id == contactLetter) {
+      count += root->m_childenWordsCount;
+      return true;
+    } 
   }
 
   const auto& children = root->m_children;
   ++searchStart;
   for (const auto& child : children) {
-    findWordsCount(child.second.get(), word, searchStart, count);
+    if (findWordsCount(child.second.get(), word, searchStart, count))
+      break;
   }
+  return false;
 }
 
