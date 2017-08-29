@@ -3,6 +3,7 @@
 #include <vector>
 #include <set>
 #include <algorithm>
+#include <queue>
 
 
 // https://www.hackerrank.com/challenges/ctci-connected-cell-in-a-grid
@@ -129,4 +130,47 @@ int findConnectedGridCellsMaxCount()
 		return maxIt->size();
 
 	return -1;
+}
+
+
+struct Node {
+  int data;
+  Node* left;
+  Node* right;
+};
+
+bool isBinaryNode(Node* node) {
+  bool leftIsLess = node->left ? node->left->data < node->data : true;
+  bool rightIsGreater = node->right ? node->right->data > node->data : true;
+  return leftIsLess && rightIsGreater;
+}
+
+void addChildren(Node* node, std::queue<Node*>& res)
+{
+  if (node->left)
+  {
+    res.push(node->left);
+  }
+
+  if (node->right)
+  {
+    res.push(node->right);
+  }
+}
+
+bool checkBST(Node* root) {
+  if (!root) {
+    return false;
+  }
+  std::queue<Node*> nodesToProcess;
+  addChildren(root, nodesToProcess);
+  while (nodesToProcess.size()) {
+    auto front = nodesToProcess.front();
+    if (!isBinaryNode) {
+      return false;
+    }
+    addChildren(front, nodesToProcess);
+    nodesToProcess.pop();
+  }
+  return true;
 }
