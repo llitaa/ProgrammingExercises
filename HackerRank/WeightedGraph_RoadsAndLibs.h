@@ -1,65 +1,53 @@
-#include "stdlib.h"
-#include <iostream>
-#include <string>
-#include "HackerRank/Tries_Contacts.h"
 #include <cmath>
-#include <algorithm>
+#include <cstdio>
 #include <vector>
+#include <iostream>
+#include <algorithm>
+#include <unordered_set>
 
 using namespace std;
 
 class LibNetwork
 {
 public:
-  struct Node {
-    bool _visited{ false };
-    bool _hasConnection{ false };
-  };
+	LibNetwork(int citiesCount, int roadsCount, long libCost, long roadCost)
+		:_cityConnections(citiesCount), _visited(citiesCount, false), _libCost(libCost), _roadCost(roadCost) {}
 
-  LibNetwork(int citiesCount, int roadsCount, long libCost, long roadCost)
-    : _citiesCount(citiesCount), _roadsCount(roadsCount), _libCost(libCost), _roadCost(roadCost)
-    , _roadNetworks(citiesCount, std::vector<Node>(citiesCount)) { }
+	void addRoad(int city1, int city2) {
+		_cityConnections[city1 - 1].insert(city2 - 1);
+		_cityConnections[city2 - 1].insert(city1 - 1);
+	}
 
-  void addRoad(int city1, int city2) {
-    auto minCityInd = std::min(city1, city2);
-    auto maxCityInd = std::max(city1, city2);
-    _roadNetworks[minCityInd - 1][maxCityInd - 1]._hasConnection = true;
-  }
+	long minBuildCost() {
+		if (_libCost <= _roadCost)
+			return _libCost*_cityConnections.size();
 
-  int minBuildCost() {
-    if (_libCost <= _roadCost)
-      return _libCost * _citiesCount;
-
-    int cost = 0;
-    for (int rowInd = 0; rowInd < _citiesCount; ++rowInd) {
-      auto& node = _roadNetworks[rowInd][rowInd];
-      if (!node._visited) {
-        node._visited = true;
-        cost += _libCost;
-        for (int colInd = rowInd + 1; colInd < _citiesCount; ++colInd)
-          processConnectedCities(rowInd, colInd, cost);
-      }
-    }
-    return cost;
-  }
+		long cost = 0;
+		for (size_t i = 0; i < _cityConnections.size(); ++i) {
+			if (!_visited[i]) {
+				cost += _libCost;
+				_visited[i] = true;
+				processAdjacentCities(i, cost);
+			}
+		}
+		return cost;
+	}
 
 private:
-  void processConnectedCities(int row, int col, int& cost) {
-    auto& node = _roadNetworks[row][col];
-    if (node._visited) return;
-    node._visited = true;
-    if (node._hasConnection) {
-      if (!_roadNetworks[col][col]._visited) {
-        _roadNetworks[col][col]._visited = true;
-        cost += _roadCost;
-      }
-      int nodeRow = col;
-      for (int nodeCol = nodeRow; nodeCol < _citiesCount; ++nodeCol)
-        processConnectedCities(nodeRow, nodeCol, cost);
-    }
-  }
+	void proccessCity(int cityInd, long& cost) {
+		if (!_visited[cityInd]) {
+			_visited[cityInd] = true;
+			cost += _roadCost;
+			processAdjacentCities(cityInd, cost);
+		}
+	}
 
-  std::vector<std::vector<Node>> _roadNetworks;
-  int _roadsCount{ 0 }, _citiesCount{ 0 };
-  long _libCost, _roadCost;
+	void processAdjacentCities(int cityInd, long& cost) {
+		for (auto adjCityInd = begin(_cityConnections[cityInd]); adjCityInd != end(_cityConnections[cityInd]); ++adjCityInd)
+			proccessCity(*adjCityInd, cost);
+	}
+
+	vector<unordered_set<int>> _cityConnections;
+	vector<int> _visited;
+	long _libCost, _roadCost;
 };
